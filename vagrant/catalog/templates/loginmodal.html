@@ -1,0 +1,146 @@
+<!-- Modal -->
+<div class="modal fade" id="loginModal" role="dialog">
+    <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title" style="font-size:24px;">
+                    <img src="/static/vegan_shopping_bag.png" alt="Bag" style="height:45px"> Welcome to Vegan Shopping List
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="login-panel">
+                    {% set STATE = gen_state_token() %}
+                    <div id="loader" class="loader" style="display:none;"></div>
+                    <div id="result"></div>
+
+                    <!-- GOOGLE SIGN IN -->
+                    <div class="login-tile">
+                        <div id="signinButton" style="margin:10px 30px 0px 30px;">
+                            <span class="g-signin" data-scope="openid email" data-clientid="797078761192-jjv3gff8s5fkedtehen27bjns0aj5uqk.apps.googleusercontent.com"
+                                data-redirecturi="postmessage" data-accesstype="offline" data-cookiepolicy="single_host_origin"
+                                data-callback="signInCallback" data-approvalprompt="force">
+                            </span>
+                        </div>
+                        <span class="title">Continue with Google</span>
+                    </div>
+                    <script>
+                        function signInCallback(authResult) {
+                            if (authResult['code']) {
+                                $('#loader').attr('style', 'display: block');
+                                // Send the one-time-use code to the server, if the server
+                                // responds, redirect back to the main catalog page.
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '/gconnect?state={{STATE}}',
+                                    processData: false,
+                                    contentType: 'application/octet-stream; charset=utf-8',
+                                    data: authResult['code'],
+                                    success: function (result) {
+                                        $('#loader').attr('style', 'display: none');
+                                        if (result) {
+                                            setTimeout(function () {
+                                                window.location.href = "/";
+                                            }, 1000);
+                                        } else if (authResult['error']) {
+                                            console.log('There was an error: ' + authResult['error']);
+                                            setTimeout(function () {
+                                                window.location.href = "/error";
+                                            }, 1000);
+                                        } else {
+                                            $('#result').html('Failed to make a server-side call. Please check your configuration and console.');
+                                        }
+                                    },
+                                    error: function (error) {
+                                        $('#loader').attr('style', 'display: none');
+                                        console.log('There was an error: ' + error);
+                                        setTimeout(function () {
+                                            window.location.href = "/error";
+                                        }, 1000);
+                                    }
+                                })
+                            }
+                        }
+                    </script>
+                    <!-- END GOOGLE SIGN IN -->
+
+                    <!--FACEBOOK SIGN IN -->
+                    <script>
+                        window.fbAsyncInit = function () {
+                            FB.init({
+                                appId: '1891478044246863',
+                                cookie: true,  // enable cookies to allow the server to access the session
+                                xfbml: true,  // parse social plugins on this page
+                                version: 'v2.8' // use version 2.8
+                            });
+                        };
+
+                        // Load the SDK asynchronously
+                        (function (d, s, id) {
+                            var js, fjs = d.getElementsByTagName(s)[0];
+                            if (d.getElementById(id)) return;
+                            js = d.createElement(s); js.id = id;
+                            js.src = "//connect.facebook.net/en_US/sdk.js";
+                            fjs.parentNode.insertBefore(js, fjs);
+                        }(document, 'script', 'facebook-jssdk'));
+
+                        // Here we run a very simple test of the Graph API after login is
+                        // successful.  See statusChangeCallback() for when this call is made.
+                        function sendTokenToServer() {
+                            var access_token = FB.getAuthResponse()['accessToken'];
+                            console.log(access_token)
+                            console.log('Welcome! Fetching your information.... ');
+                            FB.api('/me', function (response) {
+                                $('#loader').attr('style', 'display: block');
+                                console.log('Successful login for: ' + response.name);
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '/fbconnect?state={{STATE}}',
+                                    processData: false,
+                                    data: access_token,
+                                    contentType: 'application/octet-stream; charset=utf-8',
+                                    success: function (result) {
+                                        $('#loader').attr('style', 'display: none');
+                                        // Handle or verify the server response if necessary.
+                                        if (result) {
+                                            setTimeout(function () {
+                                                window.location.href = "/";
+                                            }, 1000);
+                                        } else {
+                                            $('#result').html('Failed to make a server-side call. Check your configuration and console.');
+                                        }
+                                    },
+                                    error: function (error) {
+                                        $('#loader').attr('style', 'display: none');
+                                        console.log('There was an error: ' + error);
+                                        setTimeout(function () {
+                                            window.location.href = "/error";
+                                        }, 1000);
+                                    }
+                                });
+                            });
+                        }
+                    </script>
+                    <div class="login-tile">
+                        <div>
+                            <button style="margin: 10px;">
+                                <fb:login-button scope="public_profile,email" onlogin="sendTokenToServer();">
+                                    <a href='javascript:sendTokenToServer()'>Login with Facebook</a>
+                                </fb:login-button>
+                            </button>
+                        </div>
+                        <span class="title">Continue with Facebook</span>
+                    </div>
+                    <!--END FACEBOOK SIGN IN -->
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default login-btn-close" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+
+    </div>
+</div>

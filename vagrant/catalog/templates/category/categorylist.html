@@ -1,0 +1,28 @@
+<div class="col-md-4 category-list-panel">
+
+	<div class="row catalog-title" style="height:62px">
+		<h2>
+			{% if selectedCategory %}
+			<a href="{{url_for('showCategories')}}">
+				<span class="glyphicon glyphicon-home" aria-hidden="true"></span>
+			</a>
+			{% endif %}
+			Categories
+		</h2>
+	</div>
+	<div class="content-panel">
+		{% for category in categories %}
+		<a href="{{url_for('showCategoryItems', category_name = category.name, category_id = category.id)}}">
+			{% if selectedCategory and category.id == selectedCategory.id %}
+			<div class="category-list selected">
+				<h3>{{category.name}}</h3>
+			</div>
+			{% else %}
+			<div class="category-list">
+				<h3>{{category.name}}</h3>
+			</div>
+			{% endif %}
+		</a>
+		{% endfor %}
+	</div>
+</div>

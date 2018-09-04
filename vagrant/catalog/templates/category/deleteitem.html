@@ -1,0 +1,22 @@
+<div class="col-md-8 categoryitem-panel">
+    <div class="row catalog-title">
+        <div class="row catalog-title">
+            <h2>Delete {{selectedCategoryItem.title}}</h2>
+        </div>
+    </div>
+    <div class="content-panel">
+        <form action="#" method='post'>
+            <div class="row categoryitem">
+                <h3>Are you sure you want to delete {{selectedCategoryItem.title}}?</h3>
+            </div>
+            <div class="categoryitem-actions">
+                <div class="categoryitem-actions">
+                    <button type="submit" class="btn-action left" id="submit">Yes</button>
+                    <a href="{{url_for('showCategoryItem', category_name = selectedCategoryItem.category.name, item_title = selectedCategoryItem.title, item_id = selectedCategoryItem.id)}}">
+                        <span class="btn-action right" style="margin-top:5px;">Cancel</span>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

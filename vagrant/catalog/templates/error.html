@@ -1,0 +1,12 @@
+{% extends "main.html" %} {% block content %} {% include "header.html" %}
+
+<div class="row error">
+	<a href="{{url_for('showCategories')}}">
+		<img src="/static/error.png" alt="Error" style="max-width:300px;width:50%">
+	</a>
+</div>
+<div class="row">
+	<h2 style="text-align:center">{{errormsg}}</h2>
+</div>
+
+{% endblock %}

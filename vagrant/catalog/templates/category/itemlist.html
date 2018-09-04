@@ -1,0 +1,37 @@
+<div class="col-md-8 categoryitems-list-panel">
+    <div class="row catalog-title">
+        {% if selectedCategoryItem %}
+        <h2>
+            <a href="{{url_for('showCategoryItems', category_name = selectedCategoryItem.category.name, category_id = selectedCategoryItem.cat_id)}}">
+                <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+            </a>
+            {{selectedCategory.name}} Items ({{items|length}} items)
+        </h2>
+        {% else %}
+        <h2 class="space-between">
+            {{selectedCategory.name}} Items ({{items|length}} items)
+            {%if 'username' in session %}
+            <a class="btn-action" style="padding:5px 10px;" href="{{url_for('newCatalogItem', category_id = selectedCategory.id)}}">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                Add
+            </a>
+            {% endif %}
+        </h2>
+        {% endif %}
+    </div>
+    <div class="content-panel">
+        {% if items %} {% for item in items %}
+        <a href="{{url_for('showCategoryItem', category_name = item.category.name, item_title = item.title, item_id = item.id)}}">
+            {% if selectedCategoryItem and item.id == selectedCategoryItem.id %}
+            <div class="categoryitems-list selected">
+                <h3>{{item.title}}</h3>
+            </div>
+            {% else %}
+            <div class="categoryitems-list">
+                <h3>{{item.title}}</h3>
+            </div>
+            {% endif %}
+        </a>
+        {% endfor %} {% endif %}
+    </div>
+</div>

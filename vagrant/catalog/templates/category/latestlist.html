@@ -1,0 +1,22 @@
+<div class="col-md-8 latest-list-panel">
+    <div class="row catalog-title" style="height:62px">
+        <h2 class="space-between">
+            Latest Items
+            {%if 'username' in session %}
+            <a class="btn-action" style="padding:5px 10px;" href="{{url_for('newCatalogItem')}}">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                Add
+            </a>
+            {% endif %}
+        </h2>
+    </div>
+    <div class="content-panel">
+        {% for item in latestItems %}
+        <a href="{{url_for('showCategoryItem', category_name = item.category.name, item_title = item.title, item_id = item.id)}}">
+            <div class="latest-list">
+                <h3>{{item.title}} <i>({{item.category.name}})</i></h3>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>

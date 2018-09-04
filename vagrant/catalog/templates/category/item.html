@@ -1,0 +1,20 @@
+<div class="col-md-8 categoryitem-panel">
+    <div class="row catalog-title">
+        <h2>{{selectedCategoryItem.title}}</h2>
+    </div>
+    <div class="content-panel">
+        <div class="row categoryitem">
+            <h3>Description: {{selectedCategoryItem.description}}</h3>
+        </div>
+        {%if 'username' in session and session['user_id'] == selectedCategoryItem.user_id %}
+        <div class="categoryitem-actions">
+            <a href="{{url_for('editCategoryItem', item_title = selectedCategoryItem.title, item_id = selectedCategoryItem.id)}}">
+                <span class="glyphicon glyphicon-edit"></span>
+            </a>
+            <a href="{{url_for('deleteCategoryItem', item_title = selectedCategoryItem.title, item_id = selectedCategoryItem.id)}}">
+                <span class="glyphicon glyphicon-trash"></span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
