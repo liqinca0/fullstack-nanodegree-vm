@@ -1,34 +1,40 @@
 #!/usr/bin/env python
 
 # Database model helper class
+from sqlalchemy.orm.exc import NoResultFound
 from models import Category, Item, User
 
-# Retrieve the entire catalog from database and return it as a single json object.
+
 def getCatalogJSON(session):
+    '''Retrieve the entire catalog from database and
+       return it as a single json object.'''
     categoriesJSON = []
 
-    try:
-        categories = session.query(Category).all()
-        for category in categories:
-            items = session.query(Item).filter_by(cat_id = category.id).all()
-            categoryJSON = category.serialize
-            categoryJSON['Item'] = [item.serialize for item in items]
-            categoriesJSON.append(categoryJSON)
-    except:
-        print("ERROR: catalogJSON failed!")
+    categories = session.query(Category).all()
+    for category in categories:
+        items = session.query(Item).filter_by(cat_id=category.id).all()
+        categoryJSON = category.serialize
+        categoryJSON['Item'] = [item.serialize for item in items]
+        categoriesJSON.append(categoryJSON)
 
     return categoriesJSON
+
 
 def getUserID(session, email):
     try:
         user = session.query(User).filter_by(email=email).one()
         return user.id
-    except:
+    except NoResultFound:
         return None
 
+
 def getUserInfo(session, user_id):
-    user = session.query(User).filter_by(id=user_id).one()
-    return user
+    try:
+        user = session.query(User).filter_by(id=user_id).one()
+        return user
+    except NoResultFound:
+        return None
+
 
 def createUser(session, login_session):
     newUser = User(

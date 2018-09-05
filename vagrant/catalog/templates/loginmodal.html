@@ -39,26 +39,28 @@
                                     contentType: 'application/octet-stream; charset=utf-8',
                                     data: authResult['code'],
                                     success: function (result) {
-                                        $('#loader').attr('style', 'display: none');
                                         if (result) {
                                             setTimeout(function () {
+                                                $('#loader').attr('style', 'display: none');
                                                 window.location.href = "/";
-                                            }, 1000);
+                                            }, 2000);
                                         } else if (authResult['error']) {
                                             console.log('There was an error: ' + authResult['error']);
+                                            $('#loader').attr('style', 'display: none');
                                             setTimeout(function () {
                                                 window.location.href = "/error";
-                                            }, 1000);
+                                            }, 500);
                                         } else {
+                                            $('#loader').attr('style', 'display: none');
                                             $('#result').html('Failed to make a server-side call. Please check your configuration and console.');
                                         }
                                     },
                                     error: function (error) {
-                                        $('#loader').attr('style', 'display: none');
                                         console.log('There was an error: ' + error);
+                                        $('#loader').attr('style', 'display: none');
                                         setTimeout(function () {
                                             window.location.href = "/error";
-                                        }, 1000);
+                                        }, 500);
                                     }
                                 })
                             }
@@ -102,13 +104,14 @@
                                     data: access_token,
                                     contentType: 'application/octet-stream; charset=utf-8',
                                     success: function (result) {
-                                        $('#loader').attr('style', 'display: none');
                                         // Handle or verify the server response if necessary.
                                         if (result) {
                                             setTimeout(function () {
+                                                $('#loader').attr('style', 'display: none');
                                                 window.location.href = "/";
-                                            }, 1000);
+                                            }, 2000);
                                         } else {
+                                            $('#loader').attr('style', 'display: none');
                                             $('#result').html('Failed to make a server-side call. Check your configuration and console.');
                                         }
                                     },
@@ -117,7 +120,7 @@
                                         console.log('There was an error: ' + error);
                                         setTimeout(function () {
                                             window.location.href = "/error";
-                                        }, 1000);
+                                        }, 500);
                                     }
                                 });
                             });
