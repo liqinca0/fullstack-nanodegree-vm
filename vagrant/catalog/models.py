@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 Base = declarative_base()
 
 
+# Db table for storing registered user information
 class User(Base):
     __tablename__ = 'user'
 
@@ -28,6 +29,7 @@ class User(Base):
         }
 
 
+# Db table for storing categories
 class Category(Base):
     __tablename__ = 'category'
 
@@ -43,6 +45,7 @@ class Category(Base):
         }
 
 
+# Db table for storing category items
 class Item(Base):
     __tablename__ = 'item'
 

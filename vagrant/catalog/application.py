@@ -17,12 +17,10 @@ import string
 import httplib2
 import json
 
-from modelsUtils import getCatalogJSON, getUserID, createUser
 from oauthUtils import authorized, gen_state_token
 from oauthUtils import google_connect, facebook_connect, logout
 
 app = Flask(__name__)
-APPLICATION_NAME = "Vegan Shopping List"
 app.jinja_env.globals.update(gen_state_token=gen_state_token)
 
 # Connect to Database and create database session
@@ -32,11 +30,12 @@ session = scoped_session(sessionmaker(bind=engine))
 Categories = session.query(Category).order_by(asc(Category.name))
 
 
+# Registered a logged in user in the database.
 def registerUser():
     # New user login, create a new user if the user doesn't exist.
-    user_id = getUserID(session, login_session['email'])
+    user_id = getUserID(login_session['email'])
     if not user_id:
-        user_id = createUser(session, login_session)
+        user_id = createUser()
     login_session['user_id'] = user_id
 
     response = make_response(
@@ -44,6 +43,52 @@ def registerUser():
             login_session['username'])), 200)
     response.headers['Content-Type'] = 'application/json'
     return response
+
+
+# Retrieve user id by email
+def getUserID(email):
+    try:
+        user = session.query(User).filter_by(email=email).one()
+        return user.id
+    except NoResultFound:
+        return None
+
+
+# Retrieve user info by id
+def getUserInfo(user_id):
+    try:
+        user = session.query(User).filter_by(id=user_id).one()
+        return user
+    except NoResultFound:
+        return None
+
+
+# Create a new user from login info
+def createUser():
+    newUser = User(
+        name=login_session['username'],
+        email=login_session['email'],
+        picture=login_session['picture'])
+    session.add(newUser)
+    session.commit()
+    user = session.query(User).filter_by(email=login_session['email']).one()
+    return user.id
+
+
+# Returns all category items in JSON format.
+def getCatalogJSON():
+    '''Retrieve the entire catalog from database and
+       return it as a single json object.'''
+    categoriesJSON = []
+
+    categories = session.query(Category).all()
+    for category in categories:
+        items = session.query(Item).filter_by(cat_id=category.id).all()
+        categoryJSON = category.serialize
+        categoryJSON['Item'] = [item.serialize for item in items]
+        categoriesJSON.append(categoryJSON)
+
+    return categoriesJSON
 
 
 @app.teardown_request
@@ -80,7 +125,7 @@ def showLogout():
     return redirect(url_for('showCategories'))
 
 
-# Logout based on provider
+# Show error page
 @app.route('/error')
 def showError():
     return render_template(
@@ -108,8 +153,9 @@ def showCategories():
 def showCategoryItems(category_name):
     category_id = request.args.get('category_id')
     if category_id is None:
-        flash("Oops... Category {} is not found".format(category_name))
-        return redirect(url_for('showCategories'))
+        return render_template(
+            'error.html',
+            errormsg="Oops... Category {} is not found".format(category_name))
 
     items = session.query(Item).filter_by(
         cat_id=category_id).order_by(asc(Item.title)).all()
@@ -129,13 +175,15 @@ def showCategoryItems(category_name):
 def showCategoryItem(category_name, item_title):
     item_id = request.args.get('item_id')
     if item_id is None:
-        flash("Oops... Item {} is not found".format(item_title))
-        return redirect(url_for('showCategories'))
+        return render_template(
+            'error.html',
+            errormsg="Oops... Item {} is not found".format(item_title))
 
     selectedCategoryItem = session.query(Item).filter_by(id=item_id).one()
     if selectedCategoryItem is None:
-        flash("Oops... Item {} is not found".format(item_title))
-        return redirect(url_for('showCategories'))
+        return render_template(
+            'error.html',
+            errormsg="Oops... Item {} is not found".format(item_title))
 
     items = session.query(Item).filter_by(
         cat_id=selectedCategoryItem.cat_id).order_by(asc(Item.title)).all()
@@ -151,10 +199,12 @@ def showCategoryItem(category_name, item_title):
 # Add a new catalog/category item
 @app.route('/catalog/new', methods=['GET', 'POST'])
 def newCatalogItem():
+    # Redirect to home page for unauthorized user.
     if not authorized():
         return redirect('/')
 
     if request.method == 'POST':
+        # Create a new category item
         if request.form['title']:
             newItem = Item(
                 title=request.form['title'],
@@ -171,9 +221,11 @@ def newCatalogItem():
                 item_title=newItem.title,
                 item_id=newItem.id))
         else:
-            flash("Oops... Failed to create a new item.")
-            return redirect(url_for('showCategories'))
+            return render_template(
+                'error.html',
+                errormsg="Oops... Failed to create a new item.")
     else:
+        # Show add category item page
         category_id = request.args.get('category_id')
         if category_id is not None:
             selectedCategory = session.query(Category).filter_by(
@@ -195,20 +247,24 @@ def newCatalogItem():
 # Edit a category item
 @app.route('/catalog/<item_title>/edit', methods=['GET', 'POST'])
 def editCategoryItem(item_title):
+    # Redirect to home page for unauthorized user.
     if not authorized():
         return redirect('/')
 
     item_id = request.args.get('item_id')
     if item_id is None:
-        flash("Oops... Item {} is not found".format(item_title))
-        return redirect(url_for('showCategories'))
+        return render_template(
+            'error.html',
+            errormsg="Oops... Item {} is not found".format(item_title))
 
     editCategoryItem = session.query(Item).filter_by(id=item_id).one()
     if editCategoryItem is None:
-        flash("Oops... Item {} is not found".format(item_title))
-        return redirect(url_for('showCategories'))
+        return render_template(
+            'error.html',
+            errormsg="Oops... Item {} is not found".format(item_title))
 
     if request.method == 'POST':
+        # Update the category item.
         if request.form['title']:
             editCategoryItem.title = request.form['title']
         if request.form['description']:
@@ -223,6 +279,7 @@ def editCategoryItem(item_title):
             item_title=editCategoryItem.title,
             item_id=editCategoryItem.id))
     else:
+        # Show edit category item page
         items = session.query(Item).filter_by(
             cat_id=editCategoryItem.cat_id).order_by(asc(Item.title)).all()
         return render_template(
@@ -237,20 +294,24 @@ def editCategoryItem(item_title):
 # Delete a category item
 @app.route('/catalog/<item_title>/delete', methods=['GET', 'POST'])
 def deleteCategoryItem(item_title):
+    # Redirect to home page for unauthorized user.
     if not authorized():
         return redirect('/')
 
     item_id = request.args.get('item_id')
     if item_id is None:
-        flash("Oops... Item {} is not found".format(item_title))
-        return redirect(url_for('showCategories'))
+        return render_template(
+            'error.html',
+            errormsg="Oops... Item {} is not found".format(item_title))
 
     deleteCategoryItem = session.query(Item).filter_by(id=item_id).one()
     if deleteCategoryItem is None:
-        flash("Oops... Item {} is not found".format(item_title))
-        return redirect(url_for('showCategories'))
+        return render_template(
+            'error.html',
+            errormsg="Oops... Item {} is not found".format(item_title))
 
     if request.method == 'POST':
+        # Delete the category item
         category = deleteCategoryItem.category
         session.delete(deleteCategoryItem)
         session.commit()
@@ -261,6 +322,7 @@ def deleteCategoryItem(item_title):
             category_name=category.name,
             category_id=category.id))
     else:
+        # Show delete category item confirmation page
         items = session.query(Item).filter_by(
             cat_id=deleteCategoryItem.cat_id).order_by(asc(Item.title)).all()
         return render_template(
@@ -275,7 +337,7 @@ def deleteCategoryItem(item_title):
 # JSON API to view all catalog items in all categories
 @app.route('/catalog.json')
 def catalogJSON():
-    return jsonify(Category=getCatalogJSON(session))
+    return jsonify(Category=getCatalogJSON())
 
 
 if __name__ == '__main__':
